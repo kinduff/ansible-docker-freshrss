@@ -1,0 +1,181 @@
+---
+# Project source code URL: https://github.com/freshrss/freshrss
+
+# Enable or disable FreshRSS deployment
+freshrss_enabled: true
+
+# Identifier string for FreshRSS resources (e.g. container names, network names)
+freshrss_identifier: freshrss
+
+# User ID and Group ID for running FreshRSS service in the container
+#
+# Important note: The FreshRSS Docker image uses UID and GID 1000 for the user node internally.
+# This cannot be remapped as it executes chown and setgroups commands.
+# If you have knowledge on how this value can be remapped, please let me know or send a PR.
+freshrss_uid: "1000"
+freshrss_gid: "1000"
+
+# The scheme used for serving FreshRSS (http or https)
+freshrss_scheme: https
+
+# The hostname at which FreshRSS is served
+freshrss_hostname: ""
+
+# The path at which FreshRSS is served, must either be `/` or not end with a slash (e.g. `/freshrss`)
+freshrss_path_prefix: /
+
+# Version of FreshRSS to deploy
+freshrss_version: 1.21.0
+
+# Base path for FreshRSS resources
+freshrss_base_path: "{{ freshrss_identifier }}"
+freshrss_data_path: "{{ freshrss_base_path }}/data"
+freshrss_extensions_path: "{{ freshrss_base_path }}/extensions"
+
+# Timezone configuration for FreshRSS
+freshrss_timezone: UTC
+
+# Cron job to refresh feeds at specified minutes for FreshRSS
+freshrss_cron_min: "2,32"
+
+freshrss_container_image: "{{ freshrss_container_image_registry_prefix }}/freshrss/freshrss:{{ freshrss_container_image_tag }}"
+freshrss_container_image_registry_prefix: registry.hub.docker.com
+freshrss_container_image_tag: "{{ freshrss_version }}"
+freshrss_container_image_force_pull: "{{ freshrss_container_image.endswith(':latest') }}"
+
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+freshrss_container_network: "{{ freshrss_identifier }}"
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to another reverse proxy, which runs in a different container network.
+freshrss_container_additional_networks: []
+
+# freshrss_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
+# See `../templates/labels.j2` for details.
+#
+# To inject your own other container labels, see `freshrss_container_labels_additional_labels`.
+freshrss_container_labels_traefik_enabled: true
+freshrss_container_labels_traefik_docker_network: "{{ freshrss_container_network }}"
+freshrss_container_labels_traefik_hostname: "{{ freshrss_hostname }}"
+# The path prefix must either be `/` or not end with a slash (e.g. `/freshrss`).
+freshrss_container_labels_traefik_path_prefix: "{{ freshrss_path_prefix }}"
+freshrss_container_labels_traefik_rule: "Host(`{{ freshrss_container_labels_traefik_hostname }}`){% if freshrss_container_labels_traefik_path_prefix != '/' %} && PathPrefix(`{{ freshrss_container_labels_traefik_path_prefix }}`){% endif %}"
+freshrss_container_labels_traefik_priority: 0
+freshrss_container_labels_traefik_entrypoints: web-secure
+freshrss_container_labels_traefik_tls: "{{ freshrss_container_labels_traefik_entrypoints != 'web' }}"
+freshrss_container_labels_traefik_tls_certResolver: default # noqa var-naming
+
+# Controls which additional headers to attach to all HTTP responses.
+# To add your own headers, use `freshrss_container_labels_traefik_additional_response_headers_custom`
+freshrss_container_labels_traefik_additional_response_headers: "{{ freshrss_container_labels_traefik_additional_response_headers_auto | combine(freshrss_container_labels_traefik_additional_response_headers_custom) }}"
+freshrss_container_labels_traefik_additional_response_headers_auto: |
+  {{
+    {}
+    | combine ({'X-XSS-Protection': freshrss_http_header_xss_protection} if freshrss_http_header_xss_protection else {})
+    | combine ({'X-Frame-Options': freshrss_http_header_frame_options} if freshrss_http_header_frame_options else {})
+    | combine ({'X-Content-Type-Options': freshrss_http_header_content_type_options} if freshrss_http_header_content_type_options else {})
+    | combine ({'Content-Security-Policy': freshrss_http_header_content_security_policy} if freshrss_http_header_content_security_policy else {})
+    | combine ({'Permission-Policy': freshrss_http_header_content_permission_policy} if freshrss_http_header_content_permission_policy else {})
+    | combine ({'Strict-Transport-Security': freshrss_http_header_strict_transport_security} if freshrss_http_header_strict_transport_security and freshrss_container_labels_traefik_tls else {})
+  }}
+freshrss_container_labels_traefik_additional_response_headers_custom: {}
+# freshrss_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+#
+# Example:
+# freshrss_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+freshrss_container_labels_additional_labels: ""
+
+# A list of extra arguments to pass to the container
+freshrss_container_extra_arguments: []
+
+# List of systemd services that freshrss.service depends on
+freshrss_systemd_required_services_list: ["docker.service"]
+
+# Specifies the value of the `X-XSS-Protection` header
+# Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
+#
+# Learn more about it is here:
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+# - https://portswigger.net/web-security/cross-site-scripting/reflected
+freshrss_http_header_xss_protection: "1; mode=block"
+
+# Specifies the value of the `X-Frame-Options` header which controls whether framing can happen.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+freshrss_http_header_frame_options: SAMEORIGIN
+
+# Specifies the value of the `X-Content-Type-Options` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+freshrss_http_header_content_type_options: nosniff
+
+# Specifies the value of the `Content-Security-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+freshrss_http_header_content_security_policy: frame-ancestors 'self'
+
+# Specifies the value of the `Permission-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permission-Policy
+freshrss_http_header_content_permission_policy: "{{ 'interest-cohort=()' if freshrss_floc_optout_enabled else '' }}"
+
+# Specifies the value of the `Strict-Transport-Security` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+freshrss_http_header_strict_transport_security: "max-age=31536000; includeSubDomains{{ '; preload' if freshrss_hsts_preload_enabled else '' }}"
+
+# Controls whether to send a "Permissions-Policy interest-cohort=();" header along with all responses
+#
+# Learn more about what it is here:
+# - https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea
+# - https://paramdeo.com/blog/opting-your-website-out-of-googles-floc-network
+# - https://amifloced.org/
+#
+# Of course, a better solution is to just stop using browsers (like Chrome), which participate in such tracking practices.
+# See: `freshrss_content_permission_policy`
+freshrss_floc_optout_enabled: true
+
+# Controls if HSTS preloading is enabled
+#
+# In its strongest and recommended form, the [HSTS policy](https://www.chromium.org/hsts) includes all subdomains, and
+# indicates a willingness to be "preloaded" into browsers:
+# `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+# For more information visit:
+# - https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+# - https://hstspreload.org/#opt-in
+# See: `freshrss_http_header_strict_transport_security`
+freshrss_hsts_preload_enabled: false
+
+# PostgreSQL database configuration
+freshrss_database_username: freshrss
+freshrss_database_password: ""
+freshrss_database_hostname: ""
+freshrss_database_port: 5432
+freshrss_database_name: freshrss
+
+# Controls the DB_USER environment variable
+freshrss_environment_variable_database_username: "{{ freshrss_database_username }}"
+
+# Controls the DB_PASSWORD environment variable
+freshrss_environment_variable_database_password: "{{ freshrss_database_password }}"
+
+# Controls the DB_HOST environment variable
+freshrss_environment_variable_database_hostname: "{{ freshrss_database_hostname }}"
+
+# Controls the DB_PORT environment variable
+freshrss_environment_variable_database_port: "{{ freshrss_database_port }}"
+
+# Controls the DB_BASE environment variable
+freshrss_environment_variable_database_name: "{{ freshrss_database_name }}"
+
+# Controls the BASE_URL environment variable
+freshrss_environment_variable_base_url: "{{ freshrss_scheme }}://{{ freshrss_hostname }}{{ freshrss_path_prefix }}"
+
+# Controls the TZ environment variable
+freshrss_environment_variable_timezone: "{{ freshrss_timezone }}"
+
+# Controls the CRON_MIN environment variable
+freshrss_environment_variable_cron_min: "{{ freshrss_cron_min }}"
+
+# Additional environment variables.
+freshrss_environment_variables_additional_variables: ""
