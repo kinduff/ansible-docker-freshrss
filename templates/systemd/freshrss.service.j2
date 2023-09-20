@@ -22,7 +22,8 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
 			--cap-drop=ALL \
 			--env-file={{ freshrss_base_path }}/env \
 			--label-file={{ freshrss_base_path }}/labels \
-			--mount type=bind,src={{ freshrss_data_path }},dst=/home/node \
+			--mount type=bind,src={{ freshrss_data_path }},dst=/var/www/FreshRSS/data \
+			--mount type=bind,src={{ freshrss_extensions_path }},dst=/var/www/FreshRSS/extensions \
 			--tmpfs=/tmp:rw,noexec,nosuid,size=512m \
 			{% for arg in freshrss_container_extra_arguments %}
 			{{ arg }} \

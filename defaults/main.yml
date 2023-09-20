@@ -9,11 +9,11 @@ freshrss_identifier: freshrss
 
 # User ID and Group ID for running FreshRSS service in the container
 #
-# Important note: The FreshRSS Docker image uses UID and GID 1000 for the user node internally.
+# Important note: The FreshRSS Docker image uses UID 0 and GID 33 internally.
 # This cannot be remapped as it executes chown and setgroups commands.
 # If you have knowledge on how this value can be remapped, please let me know or send a PR.
-freshrss_uid: "1000"
-freshrss_gid: "1000"
+freshrss_uid: "0"
+freshrss_gid: "33"
 
 # The scheme used for serving FreshRSS (http or https)
 freshrss_scheme: https
