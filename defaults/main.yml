@@ -153,23 +153,18 @@ freshrss_database_hostname: ""
 freshrss_database_port: 5432
 freshrss_database_name: freshrss
 
-# Controls the DB_USER environment variable
-freshrss_environment_variable_database_username: "{{ freshrss_database_username }}"
-
-# Controls the DB_PASSWORD environment variable
-freshrss_environment_variable_database_password: "{{ freshrss_database_password }}"
-
-# Controls the DB_HOST environment variable
-freshrss_environment_variable_database_hostname: "{{ freshrss_database_hostname }}"
-
-# Controls the DB_PORT environment variable
-freshrss_environment_variable_database_port: "{{ freshrss_database_port }}"
-
-# Controls the DB_BASE environment variable
-freshrss_environment_variable_database_name: "{{ freshrss_database_name }}"
-
 # Controls the BASE_URL environment variable
 freshrss_environment_variable_base_url: "{{ freshrss_scheme }}://{{ freshrss_hostname }}{{ freshrss_path_prefix }}"
+
+freshrss_environment_variable_freshrss_install: |-
+  --api_enabled
+  --base_url {{ freshrss_environment_variable_base_url }}
+  --db-type pgsql
+  --db-base {{ freshrss_database_name }}
+  --db-host {{ freshrss_database_hostname }}
+  --db-password {{ freshrss_database_password }}
+  --db-user {{ freshrss_database_username }}
+  --language en
 
 # Controls the TZ environment variable
 freshrss_environment_variable_timezone: "{{ freshrss_timezone }}"
