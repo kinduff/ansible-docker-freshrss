@@ -20,6 +20,10 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
 			--network={{ freshrss_container_network }} \
 			--user={{ freshrss_uid }}:{{ freshrss_gid }} \
 			--cap-drop=ALL \
+   			--cap-add=SETGID \
+			--cap-add=SETUID \
+			--cap-add=FOWNER \
+			--cap-add=CHOWN \
 			--env-file={{ freshrss_base_path }}/env \
 			--label-file={{ freshrss_base_path }}/labels \
 			--mount type=bind,src={{ freshrss_data_path }},dst=/var/www/FreshRSS/data \
