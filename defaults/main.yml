@@ -25,7 +25,7 @@ freshrss_hostname: ""
 freshrss_path_prefix: /
 
 # Version of FreshRSS to deploy
-freshrss_version: 1.23.0
+freshrss_version: 1.24.0
 
 # Base path for FreshRSS resources
 freshrss_base_path: "{{ freshrss_identifier }}"
